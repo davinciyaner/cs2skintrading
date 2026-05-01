@@ -13,9 +13,9 @@ router.get('/', requireAuth, async (req, res) => {
         orderBy: { createdAt: 'desc' }
     })
 
-    // Steam API Key prüfen
     const user = await prisma.user.findUnique({ where: { id: userId } })
     const hasApiKey = !!user?.steamApiKey
+
 
     if (items.length === 0) {
         return res.json({
@@ -59,13 +59,10 @@ router.post('/sync', requireAuth, async (req, res) => {
     const { id: userId, steamId } = req.user
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user?.steamApiKey) {
-        return res.status(400).json({ error: 'Kein Steam API Key hinterlegt' })
-    }
 
     try {
         const res1 = await fetch(
-            `https://api.steampowered.com/IEconItems_730/GetPlayerItems/v1/?key=${user.steamApiKey}&steamid=${steamId}&language=english`
+            `https://steamcommunity.com/inventory/${steamId}/730/2?l=english&count=100`
         )
 
         if (!res1.ok) {
@@ -90,23 +87,32 @@ router.post('/sync', requireAuth, async (req, res) => {
         }
 
         const data = await res1.json()
-        const steamItems = data?.result?.items
+
+        const descriptions = new Map(
+            (data.descriptions || []).map(d => [`${d.classid}_${d.instanceid}`, d])
+        )
+
+        const steamItems = (data.assets || []).map(asset => {
+            const desc = descriptions.get(`${asset.classid}_${asset.instanceid}`)
+
+            return {
+                assetId: asset.assetid,
+                marketHashName: desc?.market_hash_name || desc?.name || 'Unknown',
+                iconUrl: desc?.icon_url
+                    ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}/360fx360f`
+                    : null,
+                tradable: desc?.tradable === 1
+            }
+        })
 
         if (!steamItems || steamItems.length === 0) {
+            lastSyncMap.set(req.user.id, now)
             return res.json({ items: [], synced: 0 })
         }
 
         // Items verarbeiten
         const items = steamItems
             .filter(item => item.tradable)
-            .map(item => ({
-                assetId: String(item.id),
-                marketHashName: item.market_hash_name || item.name || 'Unknown',
-                iconUrl: item.icon_url
-                    ? `https://community.cloudflare.steamstatic.com/economy/image/${item.icon_url}/360fx360f`
-                    : null,
-                tradable: !!item.tradable
-            }))
             .filter(item => item.marketHashName !== 'Unknown')
 
         for (const item of items) {
