@@ -13,6 +13,7 @@ import swipeRouter from './routes/swipe.js'
 import inventoryRouter from './routes/inventory.js'
 
 const app = express()
+app.set('trust proxy', 1)
 
 await connectDB()
 
