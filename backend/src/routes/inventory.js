@@ -90,4 +90,45 @@ router.post('/sync', requireAuth, async (req, res) => {
     }
 })
 
+// Inventar-Rohdaten vom Frontend entgegennehmen und speichern
+router.post('/save', requireAuth, async (req, res) => {
+    const { id: userId } = req.user
+    const { assets, descriptions } = req.body
+
+    if (!assets || !descriptions) {
+        return res.status(400).json({ error: 'Keine Inventar-Daten' })
+    }
+
+    const descMap = {}
+    for (const desc of descriptions) {
+        descMap[`${desc.classid}_${desc.instanceid}`] = desc
+    }
+
+    const items = assets.map(asset => {
+        const desc = descMap[`${asset.classid}_${asset.instanceid}`] || {}
+        return {
+            assetId: asset.assetid,
+            marketHashName: desc.market_hash_name || 'Unknown',
+            iconUrl: desc.icon_url
+                ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}/360fx360f`
+                : null,
+            tradable: desc.tradable === 1
+        }
+    }).filter(item => item.tradable && item.marketHashName !== 'Unknown')
+
+    for (const item of items) {
+        await prisma.inventoryItem.upsert({
+            where: { userId_assetId: { userId, assetId: item.assetId } },
+            update: { marketHashName: item.marketHashName, iconUrl: item.iconUrl },
+            create: { userId, assetId: item.assetId, marketHashName: item.marketHashName, iconUrl: item.iconUrl, tradable: true }
+        })
+    }
+
+    const allItems = await prisma.inventoryItem.findMany({
+        where: { userId, tradable: true }
+    })
+
+    res.json({ items: allItems, synced: items.length })
+})
+
 export default router

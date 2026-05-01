@@ -21,6 +21,11 @@ export const api = {
     syncInventory: () => apiFetch('/api/inventory/sync', { method: 'POST' }),
     loginUrl: `${API_URL}/auth/steam`,
 
+    saveInventory: (rawData) => apiFetch('/api/inventory/save', {
+        method: 'POST',
+        body: JSON.stringify(rawData)
+    }),
+
     // Inventar aus DB (kein direkter Steam-Request mehr)
     getInventory: () => apiFetch('/api/inventory'),
 

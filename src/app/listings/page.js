@@ -111,9 +111,26 @@ export default function ListingsPage() {
     async function handleSync() {
         setSyncing(true)
         try {
-            const result = await api.syncInventory()
+            // 1. SteamID holen
+            const me = await api.getMe()
+            const steamId = me.steamId
+
+            // 2. Inventar direkt im Browser laden
+            const res = await fetch(
+                `https://steamcommunity.com/inventory/${steamId}/730/2?l=english&count=75`
+            )
+
+            if (!res.ok) {
+                if (res.status === 429) throw new Error('Steam Rate Limit – bitte kurz warten')
+                if (res.status === 403) throw new Error('Inventar ist auf privat gestellt')
+                throw new Error('Steam nicht erreichbar')
+            }
+
+            const data = await res.json()
+
+            // 3. Rohdaten ans Backend schicken zum Speichern
+            const result = await api.saveInventory(data)
             setInventory(result.items || [])
-            setEmptyMessage(null)
             showToast(`${result.synced} Skins geladen!`)
         } catch (err) {
             showToast(err.message, 'error')
