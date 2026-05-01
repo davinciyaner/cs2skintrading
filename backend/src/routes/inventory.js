@@ -30,7 +30,7 @@ router.post('/sync', requireAuth, async (req, res) => {
 
     try {
         const fetchRes = await fetch(
-            `https://steamcommunity.com/inventory/${steamId}/730/2?l=english&count=75`,
+            `${process.env.FRONTEND_URL}/api/inventory?steamId=${steamId}`,
             {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
