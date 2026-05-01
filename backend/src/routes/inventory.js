@@ -44,9 +44,18 @@ router.post('/apikey', requireAuth, async (req, res) => {
 
     res.json({ success: true })
 })
-
+const lastSyncMap = new Map()
 // Inventar mit Steam API Key laden
 router.post('/sync', requireAuth, async (req, res) => {
+    const now = Date.now()
+    const lastSync = lastSyncMap.get(req.user.id)
+
+    if (lastSync && now - lastSync < 30000) {
+        return res.status(429).json({
+            error: 'Bitte warte kurz, bevor du erneut synchronisierst.'
+        })
+    }
+
     const { id: userId, steamId } = req.user
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -55,16 +64,29 @@ router.post('/sync', requireAuth, async (req, res) => {
     }
 
     try {
-        // Offizielle Steam API – kein Rate Limit, kein CORS
         const res1 = await fetch(
             `https://api.steampowered.com/IEconItems_730/GetPlayerItems/v1/?key=${user.steamApiKey}&steamid=${steamId}&language=english`
         )
 
         if (!res1.ok) {
-            if (res1.status === 403) {
-                return res.status(403).json({ error: 'Steam API Key ungültig oder abgelaufen' })
+            const text = await res1.text().catch(() => '')
+            console.error('Steam API Fehler:', res1.status, text)
+
+            if (res1.status === 429) {
+                return res.status(429).json({
+                    error: 'Zu viele Anfragen an Steam. Bitte warte 1-2 Minuten.'
+                })
             }
-            return res.status(500).json({ error: 'Steam API nicht erreichbar' })
+
+            if (res1.status === 403) {
+                return res.status(403).json({
+                    error: 'Steam API Key ungültig oder abgelaufen'
+                })
+            }
+
+            return res.status(500).json({
+                error: `Steam API nicht erreichbar (${res1.status})`
+            })
         }
 
         const data = await res1.json()
@@ -104,7 +126,7 @@ router.post('/sync', requireAuth, async (req, res) => {
         const allItems = await prisma.inventoryItem.findMany({
             where: { userId, tradable: true }
         })
-
+        lastSyncMap.set(req.user.id, now)
         res.json({ items: allItems, synced: items.length })
     } catch (err) {
         console.error('Sync Fehler:', err.message)

@@ -13,7 +13,10 @@ function ApiKeyModal({ onSave, onClose }) {
             setError('Bitte gib einen gültigen API Key ein')
             return
         }
+
         setSaving(true)
+        setError(null)
+
         try {
             await api.saveApiKey(key)
             onSave()
@@ -109,7 +112,7 @@ function ApiKeyModal({ onSave, onClose }) {
                         borderRadius: '8px', color: '#000', cursor: saving ? 'wait' : 'pointer',
                         fontFamily: 'Rajdhani, sans-serif', fontSize: '16px', fontWeight: 700
                     }}>
-                        {saving ? 'Speichern...' : 'Key speichern & Inventar laden'}
+                        {saving ? 'Speichern...' : 'Key speichern'}
                     </button>
                 </div>
 
@@ -185,6 +188,7 @@ export default function ListingsPage() {
     const [showApiModal, setShowApiModal] = useState(false)
     const [hasApiKey, setHasApiKey] = useState(false)
     const [message, setMessage] = useState(null)
+    const [lastSync, setLastSync] = useState(0)
 
     useEffect(() => { loadData() }, [])
 
@@ -212,7 +216,17 @@ export default function ListingsPage() {
             setShowApiModal(true)
             return
         }
+
+        const now = Date.now()
+
+        if (now - lastSync < 30000) {
+            showToast('Bitte warte kurz, bevor du erneut synchronisierst.', 'error')
+            return
+        }
+
+        setLastSync(now)
         setSyncing(true)
+
         try {
             const result = await api.syncInventory()
             setInventory(result.items || [])
@@ -222,7 +236,12 @@ export default function ListingsPage() {
             if (err.message.includes('API Key ungültig')) {
                 setShowApiModal(true)
             }
-            showToast(err.message, 'error')
+
+            if (err.message.includes('429') || err.message.includes('Zu viele')) {
+                showToast('Steam blockiert gerade zu viele Anfragen. Bitte später erneut versuchen.', 'error')
+            } else {
+                showToast(err.message, 'error')
+            }
         } finally {
             setSyncing(false)
         }
@@ -231,18 +250,9 @@ export default function ListingsPage() {
     async function handleApiKeySaved() {
         setShowApiModal(false)
         setHasApiKey(true)
-        // Direkt syncen nach Key-Eingabe
-        setSyncing(true)
-        try {
-            const result = await api.syncInventory()
-            setInventory(result.items || [])
-            setMessage(null)
-            showToast(`${result.synced} Skins geladen!`)
-        } catch (err) {
-            showToast(err.message, 'error')
-        } finally {
-            setSyncing(false)
-        }
+        showToast('API Key gespeichert!')
+
+        await loadData()
     }
 
     function isListed(item) {
