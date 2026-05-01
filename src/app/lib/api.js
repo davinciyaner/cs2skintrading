@@ -26,6 +26,11 @@ export const api = {
         body: JSON.stringify(rawData)
     }),
 
+    saveApiKey: (apiKey) => apiFetch('/api/inventory/apikey', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey })
+    }),
+
     // Inventar aus DB (kein direkter Steam-Request mehr)
     getInventory: () => apiFetch('/api/inventory'),
 
