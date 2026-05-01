@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id         String    @id @default(cuid())
+  steamId    String    @unique
+  username   String?
+  avatar     String?
+  profileUrl String?
+  createdAt  DateTime  @default(now())
+  listings   Listing[]
+  matchesA   Match[]   @relation("UserA")
+  matchesB   Match[]   @relation("UserB")
+}
+
+model Listing {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  steamId        String
+  assetId        String
+  marketHashName String
+  iconUrl        String?
+  floatValue     Float?
+  wear           String?
+  price          Float
+  priceMin       Float
+  priceMax       Float
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  matchesA       Match[]  @relation("ListingA")
+  matchesB       Match[]  @relation("ListingB")
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  listingAId String
+  listingBId String
+  userAId    String
+  userBId    String
+  listingA   Listing  @relation("ListingA", fields: [listingAId], references: [id])
+  listingB   Listing  @relation("ListingB", fields: [listingBId], references: [id])
+  userA      User     @relation("UserA", fields: [userAId], references: [id])
+  userB      User     @relation("UserB", fields: [userBId], references: [id])
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+}
