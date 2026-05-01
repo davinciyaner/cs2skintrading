@@ -7,15 +7,30 @@ datasource db {
 }
 
 model User {
-  id         String    @id @default(cuid())
-  steamId    String    @unique
-  username   String?
-  avatar     String?
-  profileUrl String?
-  createdAt  DateTime  @default(now())
-  listings   Listing[]
-  matchesA   Match[]   @relation("UserA")
-  matchesB   Match[]   @relation("UserB")
+  id             String          @id @default(cuid())
+  steamId        String          @unique
+  username       String?
+  avatar         String?
+  profileUrl     String?
+  createdAt      DateTime        @default(now())
+  listings       Listing[]
+  matchesA       Match[]         @relation("UserA")
+  matchesB       Match[]         @relation("UserB")
+  inventoryItems InventoryItem[]
+}
+
+model InventoryItem {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  assetId        String
+  marketHashName String
+  iconUrl        String?
+  tradable       Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, assetId])
 }
 
 model Listing {
@@ -47,6 +62,6 @@ model Match {
   listingB   Listing  @relation("ListingB", fields: [listingBId], references: [id])
   userA      User     @relation("UserA", fields: [userAId], references: [id])
   userB      User     @relation("UserB", fields: [userBId], references: [id])
-  status     String   @default("pending")
+  status     String   @default("liked")
   createdAt  DateTime @default(now())
 }
