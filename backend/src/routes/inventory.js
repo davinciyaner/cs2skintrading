@@ -4,7 +4,7 @@ import prisma from '../config/db.js'
 
 const router = express.Router()
 
-// Inventar aus DB laden (kein Steam-Request mehr)
+// Inventar aus DB laden
 router.get('/', requireAuth, async (req, res) => {
     const userId = req.user.id
 
@@ -13,69 +13,91 @@ router.get('/', requireAuth, async (req, res) => {
         orderBy: { createdAt: 'desc' }
     })
 
+    // Steam API Key prüfen
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const hasApiKey = !!user?.steamApiKey
+
     if (items.length === 0) {
-        // Noch keine Items in DB – manuellen Sync triggern
         return res.json({
             items: [],
-            message: 'Inventar wird geladen – bitte kurz warten und Seite neu laden.'
+            hasApiKey,
+            message: hasApiKey
+                ? 'Klicke auf "Inventar aktualisieren" um deine Skins zu laden.'
+                : 'Bitte gib deinen Steam API Key ein um dein Inventar zu laden.'
         })
     }
 
-    res.json({ items })
+    res.json({ items, hasApiKey })
 })
 
-// Manueller Sync-Button
+// Steam API Key speichern
+router.post('/apikey', requireAuth, async (req, res) => {
+    const { apiKey } = req.body
+    if (!apiKey || apiKey.length < 10) {
+        return res.status(400).json({ error: 'Ungültiger API Key' })
+    }
+
+    await prisma.user.update({
+        where: { id: req.user.id },
+        data: { steamApiKey: apiKey }
+    })
+
+    res.json({ success: true })
+})
+
+// Inventar mit Steam API Key laden
 router.post('/sync', requireAuth, async (req, res) => {
     const { id: userId, steamId } = req.user
 
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user?.steamApiKey) {
+        return res.status(400).json({ error: 'Kein Steam API Key hinterlegt' })
+    }
+
     try {
-        const fetchRes = await fetch(
-            `${process.env.FRONTEND_URL}/api/inventory?steamId=${steamId}`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json',
-                }
-            }
+        // Offizielle Steam API – kein Rate Limit, kein CORS
+        const res1 = await fetch(
+            `https://api.steampowered.com/IEconItems_730/GetPlayerItems/v1/?key=${user.steamApiKey}&steamid=${steamId}&language=english`
         )
 
-        if (!fetchRes.ok) {
-            if (fetchRes.status === 429) {
-                return res.status(429).json({ error: 'Steam Rate Limit – bitte 60 Sekunden warten' })
+        if (!res1.ok) {
+            if (res1.status === 403) {
+                return res.status(403).json({ error: 'Steam API Key ungültig oder abgelaufen' })
             }
-            if (fetchRes.status === 403) {
-                return res.status(403).json({ error: 'Inventar ist auf privat gestellt' })
-            }
-            return res.status(500).json({ error: 'Steam nicht erreichbar' })
+            return res.status(500).json({ error: 'Steam API nicht erreichbar' })
         }
 
-        const data = await fetchRes.json()
-        const { assets, descriptions } = data
+        const data = await res1.json()
+        const steamItems = data?.result?.items
 
-        if (!assets || !descriptions) return res.json({ items: [], synced: 0 })
-
-        const descMap = {}
-        for (const desc of descriptions) {
-            descMap[`${desc.classid}_${desc.instanceid}`] = desc
+        if (!steamItems || steamItems.length === 0) {
+            return res.json({ items: [], synced: 0 })
         }
 
-        const items = assets.map(asset => {
-            const desc = descMap[`${asset.classid}_${asset.instanceid}`] || {}
-            return {
-                assetId: asset.assetid,
-                marketHashName: desc.market_hash_name || 'Unknown',
-                iconUrl: desc.icon_url
-                    ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}/360fx360f`
+        // Items verarbeiten
+        const items = steamItems
+            .filter(item => item.tradable)
+            .map(item => ({
+                assetId: String(item.id),
+                marketHashName: item.market_hash_name || item.name || 'Unknown',
+                iconUrl: item.icon_url
+                    ? `https://community.cloudflare.steamstatic.com/economy/image/${item.icon_url}/360fx360f`
                     : null,
-                tradable: desc.tradable === 1
-            }
-        }).filter(item => item.tradable && item.marketHashName !== 'Unknown')
+                tradable: !!item.tradable
+            }))
+            .filter(item => item.marketHashName !== 'Unknown')
 
         for (const item of items) {
             await prisma.inventoryItem.upsert({
                 where: { userId_assetId: { userId, assetId: item.assetId } },
                 update: { marketHashName: item.marketHashName, iconUrl: item.iconUrl },
-                create: { userId, assetId: item.assetId, marketHashName: item.marketHashName, iconUrl: item.iconUrl, tradable: true }
+                create: {
+                    userId,
+                    assetId: item.assetId,
+                    marketHashName: item.marketHashName,
+                    iconUrl: item.iconUrl,
+                    tradable: true
+                }
             })
         }
 
@@ -88,47 +110,6 @@ router.post('/sync', requireAuth, async (req, res) => {
         console.error('Sync Fehler:', err.message)
         res.status(500).json({ error: 'Sync fehlgeschlagen' })
     }
-})
-
-// Inventar-Rohdaten vom Frontend entgegennehmen und speichern
-router.post('/save', requireAuth, async (req, res) => {
-    const { id: userId } = req.user
-    const { assets, descriptions } = req.body
-
-    if (!assets || !descriptions) {
-        return res.status(400).json({ error: 'Keine Inventar-Daten' })
-    }
-
-    const descMap = {}
-    for (const desc of descriptions) {
-        descMap[`${desc.classid}_${desc.instanceid}`] = desc
-    }
-
-    const items = assets.map(asset => {
-        const desc = descMap[`${asset.classid}_${asset.instanceid}`] || {}
-        return {
-            assetId: asset.assetid,
-            marketHashName: desc.market_hash_name || 'Unknown',
-            iconUrl: desc.icon_url
-                ? `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}/360fx360f`
-                : null,
-            tradable: desc.tradable === 1
-        }
-    }).filter(item => item.tradable && item.marketHashName !== 'Unknown')
-
-    for (const item of items) {
-        await prisma.inventoryItem.upsert({
-            where: { userId_assetId: { userId, assetId: item.assetId } },
-            update: { marketHashName: item.marketHashName, iconUrl: item.iconUrl },
-            create: { userId, assetId: item.assetId, marketHashName: item.marketHashName, iconUrl: item.iconUrl, tradable: true }
-        })
-    }
-
-    const allItems = await prisma.inventoryItem.findMany({
-        where: { userId, tradable: true }
-    })
-
-    res.json({ items: allItems, synced: items.length })
 })
 
 export default router

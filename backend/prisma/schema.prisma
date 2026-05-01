@@ -12,6 +12,7 @@ model User {
   username       String?
   avatar         String?
   profileUrl     String?
+  steamApiKey    String?
   createdAt      DateTime        @default(now())
   listings       Listing[]
   matchesA       Match[]         @relation("UserA")

@@ -1,76 +1,172 @@
 'use client'
 import { useState, useEffect } from 'react'
-import {api} from "@/app/lib/api";
+import { api } from '../../lib/api'
 
+// Steam API Key Info Modal
+function ApiKeyModal({ onSave, onClose }) {
+    const [key, setKey] = useState('')
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState(null)
+
+    async function handleSave() {
+        if (!key || key.length < 10) {
+            setError('Bitte gib einen gültigen API Key ein')
+            return
+        }
+        setSaving(true)
+        try {
+            await api.saveApiKey(key)
+            onSave()
+        } catch (err) {
+            setError(err.message)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <div style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100, padding: '16px'
+        }}>
+            <div style={{
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: '16px',
+                padding: '28px',
+                maxWidth: '440px',
+                width: '100%'
+            }}>
+                <h2 style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '24px', marginBottom: '8px' }}>
+                    Steam API Key einrichten
+                </h2>
+                <p style={{ color: 'var(--muted)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.6 }}>
+                    Um dein Inventar zu laden brauchst du einen Steam API Key.
+                    Das dauert nur 1 Minute.
+                </p>
+
+                {/* Schritt-für-Schritt */}
+                {[
+                    { step: '1', text: 'Geh zu', link: 'https://steamcommunity.com/dev/apikey', linkText: 'steamcommunity.com/dev/apikey' },
+                    { step: '2', text: 'Trage als Domain ein: cs2skintrading.vercel.app' },
+                    { step: '3', text: 'Klicke auf "Registrieren" und kopiere den Key' },
+                ].map(s => (
+                    <div key={s.step} style={{
+                        display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'flex-start'
+                    }}>
+                        <div style={{
+                            background: 'var(--accent)', color: '#000',
+                            width: '24px', height: '24px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '13px',
+                            flexShrink: 0
+                        }}>{s.step}</div>
+                        <div style={{ fontSize: '14px', color: 'var(--text)', paddingTop: '3px' }}>
+                            {s.text}{' '}
+                            {s.link && (
+                                <a href={s.link} target="_blank" rel="noopener noreferrer"
+                                   style={{ color: 'var(--accent)' }}>
+                                    {s.linkText}
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Input */}
+                <input
+                    type="text"
+                    placeholder="Dein Steam API Key (32 Zeichen)"
+                    value={key}
+                    onChange={e => setKey(e.target.value)}
+                    style={{
+                        width: '100%', padding: '12px', marginTop: '8px',
+                        background: 'var(--bg)', border: '1px solid var(--border)',
+                        borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
+                        fontFamily: 'monospace', marginBottom: '8px'
+                    }}
+                />
+
+                {error && (
+                    <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '8px' }}>
+                        {error}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                    <button onClick={onClose} style={{
+                        flex: 1, padding: '12px',
+                        background: 'transparent', border: '1px solid var(--border)',
+                        borderRadius: '8px', color: 'var(--muted)', cursor: 'pointer', fontSize: '14px'
+                    }}>
+                        Abbrechen
+                    </button>
+                    <button onClick={handleSave} disabled={saving} style={{
+                        flex: 2, padding: '12px',
+                        background: 'var(--accent)', border: 'none',
+                        borderRadius: '8px', color: '#000', cursor: saving ? 'wait' : 'pointer',
+                        fontFamily: 'Rajdhani, sans-serif', fontSize: '16px', fontWeight: 700
+                    }}>
+                        {saving ? 'Speichern...' : 'Key speichern & Inventar laden'}
+                    </button>
+                </div>
+
+                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '12px', textAlign: 'center' }}>
+                    🔒 Dein Key wird sicher gespeichert und nur für dein Inventar genutzt.
+                </p>
+            </div>
+        </div>
+    )
+}
 
 function InventoryItem({ item, isListed, onAdd, onRemove, loading }) {
     return (
         <div style={{
             background: 'var(--bg2)',
             border: `1px solid ${isListed ? 'var(--accent)' : 'var(--border)'}`,
-            borderRadius: '10px',
-            overflow: 'hidden',
+            borderRadius: '10px', overflow: 'hidden',
             transition: 'border-color 0.2s',
             boxShadow: isListed ? '0 0 16px rgba(240,180,41,0.1)' : 'none'
         }}>
             <div style={{
                 background: 'linear-gradient(135deg, #0a0a12 0%, #14141f 100%)',
-                padding: '16px',
-                display: 'flex',
-                justifyContent: 'center',
-                height: '100px'
+                padding: '16px', display: 'flex', justifyContent: 'center', height: '100px'
             }}>
-                {item.iconUrl ? (
-                    <img src={item.iconUrl} alt={item.name} style={{ maxHeight: '80px', objectFit: 'contain' }} />
-                ) : (
-                    <span style={{ fontSize: '32px', lineHeight: '80px' }}>🔫</span>
-                )}
+                {item.iconUrl
+                    ? <img src={item.iconUrl} alt={item.marketHashName} style={{ maxHeight: '80px', objectFit: 'contain' }} />
+                    : <span style={{ fontSize: '32px', lineHeight: '80px' }}>🔫</span>
+                }
             </div>
 
             <div style={{ padding: '10px 12px' }}>
                 <div style={{
-                    fontSize: '11px',
-                    color: 'var(--text)',
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                    marginBottom: '8px',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
+                    fontSize: '11px', color: 'var(--text)', fontWeight: 500,
+                    lineHeight: 1.3, marginBottom: '8px',
+                    overflow: 'hidden', display: '-webkit-box',
+                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'
                 }}>
                     {item.marketHashName}
                 </div>
 
                 {isListed ? (
-                    <button
-                        onClick={() => onRemove(item)}
-                        disabled={loading}
-                        style={{
-                            width: '100%', padding: '6px',
-                            background: 'rgba(240,180,41,0.15)',
-                            border: '1px solid var(--accent)',
-                            borderRadius: '6px', color: 'var(--accent)',
-                            fontSize: '12px', fontWeight: 600,
-                            fontFamily: 'Rajdhani, sans-serif',
-                            cursor: loading ? 'wait' : 'pointer'
-                        }}
-                    >✓ EINGESTELLT</button>
+                    <button onClick={() => onRemove(item)} disabled={loading} style={{
+                        width: '100%', padding: '6px',
+                        background: 'rgba(240,180,41,0.15)', border: '1px solid var(--accent)',
+                        borderRadius: '6px', color: 'var(--accent)',
+                        fontSize: '12px', fontWeight: 600, fontFamily: 'Rajdhani, sans-serif',
+                        cursor: loading ? 'wait' : 'pointer'
+                    }}>✓ EINGESTELLT</button>
                 ) : (
-                    <button
-                        onClick={() => onAdd(item)}
-                        disabled={loading}
-                        style={{
-                            width: '100%', padding: '6px',
-                            background: 'transparent',
-                            border: '1px solid var(--border)',
-                            borderRadius: '6px', color: 'var(--muted)',
-                            fontSize: '12px', fontFamily: 'Rajdhani, sans-serif',
-                            cursor: loading ? 'wait' : 'pointer',
-                            transition: 'all 0.15s'
-                        }}
-                        onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-                        onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+                    <button onClick={() => onAdd(item)} disabled={loading} style={{
+                        width: '100%', padding: '6px', background: 'transparent',
+                        border: '1px solid var(--border)', borderRadius: '6px',
+                        color: 'var(--muted)', fontSize: '12px', fontFamily: 'Rajdhani, sans-serif',
+                        cursor: loading ? 'wait' : 'pointer', transition: 'all 0.15s'
+                    }}
+                            onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+                            onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
                     >+ ANBIETEN</button>
                 )}
             </div>
@@ -86,7 +182,9 @@ export default function ListingsPage() {
     const [syncing, setSyncing] = useState(false)
     const [error, setError] = useState(null)
     const [toast, setToast] = useState(null)
-    const [emptyMessage, setEmptyMessage] = useState(null)
+    const [showApiModal, setShowApiModal] = useState(false)
+    const [hasApiKey, setHasApiKey] = useState(false)
+    const [message, setMessage] = useState(null)
 
     useEffect(() => { loadData() }, [])
 
@@ -100,7 +198,8 @@ export default function ListingsPage() {
             ])
             setInventory(inv.items || [])
             setMyListings(listings || [])
-            if (inv.message) setEmptyMessage(inv.message)
+            setHasApiKey(inv.hasApiKey || false)
+            if (inv.message) setMessage(inv.message)
         } catch (err) {
             setError(err.message)
         } finally {
@@ -109,28 +208,35 @@ export default function ListingsPage() {
     }
 
     async function handleSync() {
+        if (!hasApiKey) {
+            setShowApiModal(true)
+            return
+        }
         setSyncing(true)
         try {
-            // 1. SteamID holen
-            const me = await api.getMe()
-            const steamId = me.steamId
-
-            // 2. Inventar direkt im Browser laden
-            const res = await fetch(
-                `https://steamcommunity.com/inventory/${steamId}/730/2?l=english&count=75`
-            )
-
-            if (!res.ok) {
-                if (res.status === 429) throw new Error('Steam Rate Limit – bitte kurz warten')
-                if (res.status === 403) throw new Error('Inventar ist auf privat gestellt')
-                throw new Error('Steam nicht erreichbar')
-            }
-
-            const data = await res.json()
-
-            // 3. Rohdaten ans Backend schicken zum Speichern
-            const result = await api.saveInventory(data)
+            const result = await api.syncInventory()
             setInventory(result.items || [])
+            setMessage(null)
+            showToast(`${result.synced} Skins geladen!`)
+        } catch (err) {
+            if (err.message.includes('API Key ungültig')) {
+                setShowApiModal(true)
+            }
+            showToast(err.message, 'error')
+        } finally {
+            setSyncing(false)
+        }
+    }
+
+    async function handleApiKeySaved() {
+        setShowApiModal(false)
+        setHasApiKey(true)
+        // Direkt syncen nach Key-Eingabe
+        setSyncing(true)
+        try {
+            const result = await api.syncInventory()
+            setInventory(result.items || [])
+            setMessage(null)
             showToast(`${result.synced} Skins geladen!`)
         } catch (err) {
             showToast(err.message, 'error')
@@ -144,7 +250,7 @@ export default function ListingsPage() {
     }
 
     function getListingId(item) {
-        return myListings.find(l => l.assetId === item.assetId)?._id || myListings.find(l => l.assetId === item.assetId)?.id
+        return myListings.find(l => l.assetId === item.assetId)?.id
     }
 
     function showToast(msg, type = 'success') {
@@ -161,7 +267,7 @@ export default function ListingsPage() {
                 iconUrl: item.iconUrl
             })
             setMyListings(prev => [...prev, listing])
-            showToast(`Skin eingestellt!`)
+            showToast('Skin eingestellt!')
         } catch (err) {
             showToast(err.message, 'error')
         } finally {
@@ -175,7 +281,7 @@ export default function ListingsPage() {
         setActionLoading(true)
         try {
             await api.deleteListing(listingId)
-            setMyListings(prev => prev.filter(l => (l.id || l._id) !== listingId))
+            setMyListings(prev => prev.filter(l => l.id !== listingId))
             showToast('Skin zurückgezogen')
         } catch (err) {
             showToast(err.message, 'error')
@@ -186,34 +292,29 @@ export default function ListingsPage() {
 
     return (
         <div>
+            {showApiModal && (
+                <ApiKeyModal
+                    onSave={handleApiKeySaved}
+                    onClose={() => setShowApiModal(false)}
+                />
+            )}
+
             <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                     <h1 style={{ fontSize: '28px', marginBottom: '6px' }}>Meine Skins</h1>
-                    <p style={{ color: 'var(--muted)', fontSize: '14px' }}>
-                        Wähle Skins die du tauschen möchtest.
-                    </p>
+                    <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Wähle Skins die du tauschen möchtest.</p>
                 </div>
-                <button
-                    onClick={handleSync}
-                    disabled={syncing}
-                    style={{
-                        padding: '8px 16px',
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        borderRadius: '8px',
-                        color: syncing ? 'var(--muted)' : 'var(--text)',
-                        fontSize: '13px',
-                        cursor: syncing ? 'wait' : 'pointer',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
+                <button onClick={handleSync} disabled={syncing} style={{
+                    padding: '8px 16px', background: 'transparent',
+                    border: '1px solid var(--border)', borderRadius: '8px',
+                    color: syncing ? 'var(--muted)' : 'var(--text)',
+                    fontSize: '13px', cursor: syncing ? 'wait' : 'pointer',
+                    fontFamily: 'Rajdhani, sans-serif', letterSpacing: '0.05em', whiteSpace: 'nowrap'
+                }}>
                     {syncing ? '⏳ Lädt...' : '🔄 Inventar aktualisieren'}
                 </button>
             </div>
 
-            {/* Stats */}
             {!loading && (
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
                     {[
@@ -244,30 +345,26 @@ export default function ListingsPage() {
                 </div>
             )}
 
-            {/* Leer + Sync Hinweis */}
             {!loading && !error && inventory.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
-                    <p style={{ color: 'var(--muted)', marginBottom: '20px', fontSize: '14px' }}>
-                        {emptyMessage || 'Keine Skins gefunden.'}
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔑</div>
+                    <h3 style={{ marginBottom: '8px', fontSize: '20px' }}>
+                        {hasApiKey ? 'Keine Skins gefunden' : 'Steam API Key erforderlich'}
+                    </h3>
+                    <p style={{ color: 'var(--muted)', marginBottom: '20px', fontSize: '14px', lineHeight: 1.6 }}>
+                        {message || 'Gib deinen Steam API Key ein um dein Inventar zu laden.'}
                     </p>
-                    <button
-                        onClick={handleSync}
-                        disabled={syncing}
-                        style={{
-                            background: 'var(--accent)', color: '#000',
-                            border: 'none', padding: '12px 28px',
-                            borderRadius: '8px', fontFamily: 'Rajdhani, sans-serif',
-                            fontSize: '16px', fontWeight: 700,
-                            cursor: syncing ? 'wait' : 'pointer'
-                        }}
-                    >
-                        {syncing ? 'Lädt...' : '🔄 Inventar laden'}
+                    <button onClick={() => hasApiKey ? handleSync() : setShowApiModal(true)} disabled={syncing} style={{
+                        background: 'var(--accent)', color: '#000', border: 'none',
+                        padding: '12px 28px', borderRadius: '8px',
+                        fontFamily: 'Rajdhani, sans-serif', fontSize: '16px', fontWeight: 700,
+                        cursor: syncing ? 'wait' : 'pointer'
+                    }}>
+                        {hasApiKey ? '🔄 Inventar laden' : '🔑 API Key einrichten'}
                     </button>
                 </div>
             )}
 
-            {/* Grid */}
             {!loading && !error && inventory.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                     {inventory.map(item => (
