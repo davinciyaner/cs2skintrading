@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { api } from '../../lib/api'
+import {api} from "@/app/lib/api";
+
 
 function InventoryItem({ item, isListed, onAdd, onRemove, loading }) {
     return (
