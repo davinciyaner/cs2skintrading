@@ -13,7 +13,7 @@ import swipeRouter from './routes/swipe.js'
 import inventoryRouter from './routes/inventory.js'
 
 const app = express()
-app.set('trust proxy', 1)
+//app.set('trust proxy', 1)
 
 await connectDB()
 
@@ -27,8 +27,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
-        sameSite: 'none',
+        secure: false,
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000
     }
 }))
