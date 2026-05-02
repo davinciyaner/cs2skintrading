@@ -23,12 +23,13 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(session({
+    store: new SQLiteStore({ db: 'sessions.db', dir: './' }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
-        sameSite: 'none',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000
     }
 }))
