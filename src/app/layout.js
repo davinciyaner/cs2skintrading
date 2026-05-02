@@ -1,5 +1,6 @@
 import './globals.css'
 import Navbar from "@/app/components/Navbar";
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata = {
   title: 'SkinSwipe – CS2 Skin Trading',
@@ -9,6 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
       <html lang="de">
+      <Analytics />
       <body>
       <Navbar />
       <main style={{ maxWidth: '480px', margin: '0 auto', padding: '24px 16px' }}>
