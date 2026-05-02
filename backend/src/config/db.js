@@ -1,11 +1,11 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 const isLocal = process.env.DATABASE_URL?.startsWith('file:')
 
 const adapter = new PrismaLibSql({
     url: process.env.DATABASE_URL,
-    // Auth Token nur für Turso (nicht lokal)
     authToken: isLocal ? undefined : process.env.DATABASE_AUTH_TOKEN
 })
 
