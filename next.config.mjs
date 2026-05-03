@@ -4,9 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api-backend/:path*',
-        destination: process.env.BACKEND_URL
-            ? `${process.env.BACKEND_URL}/:path*`
-            : 'http://localhost:3001/:path*'
+        destination: 'https://cs2skintrading.onrender.com/:path*'
       }
     ]
   }
