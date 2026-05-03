@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import {api} from "../lib/api";
+import { api } from '../lib/api'
+import AuthGuard from '../components/AuthGuard'
 
-// Wear-Farbe
 function wearColor(wear) {
     const map = {
         'Factory New': '#4ade80',
@@ -12,70 +12,30 @@ function wearColor(wear) {
         'Well-Worn': '#f97316',
         'Battle-Scarred': '#ef4444'
     }
-    return map[wear] || '#888'
+    return map[wear] || '#6b6865'
 }
 
-// Match Overlay
 function MatchOverlay({ onClose, otherUser }) {
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.9)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 200,
-            gap: '20px',
-            animation: 'fadeUp 0.3s ease'
-        }}>
-            <div style={{ fontSize: '80px', animation: 'fadeUp 0.4s ease' }}>🎉</div>
-            <h2 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '40px',
-                color: 'var(--accent)',
-                letterSpacing: '0.1em'
-            }}>
-                IT'S A MATCH
-            </h2>
-            <p style={{ color: 'var(--muted)', textAlign: 'center', lineHeight: 1.6 }}>
+        <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-[200] gap-5">
+            <div className="text-[80px] animate-bounce">🎉</div>
+            <h2 className="font-bebas text-5xl text-yellow-400 tracking-widest">IT'S A MATCH</h2>
+            <p className="text-[#4a4845] text-sm text-center leading-relaxed">
                 Ihr wollt beide tauschen!<br />
                 Schreib {otherUser?.username || 'dem anderen'} auf Steam an.
             </p>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <div className="flex gap-3 mt-2">
                 {otherUser?.steamId && (
                     <a
                         href={`https://steamcommunity.com/profiles/${otherUser.steamId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                            background: 'var(--accent)',
-                            color: '#000',
-                            padding: '12px 24px',
-                            borderRadius: '8px',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontSize: '16px',
-                            fontWeight: 700,
-                            letterSpacing: '0.05em'
-                        }}
+                        target="_blank" rel="noopener noreferrer"
+                        className="bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-lg font-bebas text-lg tracking-widest transition-all"
                     >
-                        AUF STEAM ÖFFNEN
+                        Auf Steam öffnen
                     </a>
                 )}
-                <button
-                    onClick={onClose}
-                    style={{
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        color: 'var(--muted)',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                    }}
-                >
+                <button onClick={onClose}
+                        className="border border-white/[0.08] text-[#6b6865] hover:text-[#f0ede8] hover:border-white/20 px-6 py-3 rounded-lg text-sm transition-all">
                     Weiter swipen
                 </button>
             </div>
@@ -83,22 +43,13 @@ function MatchOverlay({ onClose, otherUser }) {
     )
 }
 
-// Haupt-Swipe-Card
 function SwipeCard({ listing, onLike, onDislike, disabled }) {
     const [dragX, setDragX] = useState(0)
     const [dragging, setDragging] = useState(false)
     const startX = useRef(null)
 
-    function handleMouseDown(e) {
-        startX.current = e.clientX
-        setDragging(true)
-    }
-
-    function handleMouseMove(e) {
-        if (!dragging || startX.current === null) return
-        setDragX(e.clientX - startX.current)
-    }
-
+    function handleMouseDown(e) { startX.current = e.clientX; setDragging(true) }
+    function handleMouseMove(e) { if (!dragging || startX.current === null) return; setDragX(e.clientX - startX.current) }
     function handleMouseUp() {
         if (!dragging) return
         setDragging(false)
@@ -118,177 +69,55 @@ function SwipeCard({ listing, onLike, onDislike, disabled }) {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            style={{
-                position: 'absolute',
-                width: '100%',
-                background: 'var(--bg2)',
-                border: '1px solid var(--border)',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                cursor: dragging ? 'grabbing' : 'grab',
-                userSelect: 'none',
-                transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
-                transition: dragging ? 'none' : 'transform 0.3s ease',
-                boxShadow: dragX > 0
-                    ? `0 8px 40px rgba(34,197,94,${likeOpacity * 0.4})`
-                    : dragX < 0
-                        ? `0 8px 40px rgba(239,68,68,${nopeOpacity * 0.4})`
-                        : 'var(--card-glow)'
-            }}
+            style={{ transform: `translateX(${dragX}px) rotate(${rotation}deg)`, transition: dragging ? 'none' : 'transform 0.3s ease', boxShadow: dragX > 0 ? `0 8px 40px rgba(74,222,128,${likeOpacity * 0.3})` : dragX < 0 ? `0 8px 40px rgba(239,68,68,${nopeOpacity * 0.3})` : '0 20px 60px rgba(0,0,0,0.5)' }}
+            className="absolute w-full bg-[#0e1117] border border-white/[0.08] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
         >
-            {/* LIKE / NOPE Labels */}
-            <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                background: 'rgba(34,197,94,0.9)',
-                color: '#fff',
-                padding: '4px 12px',
-                borderRadius: '6px',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '20px',
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                transform: 'rotate(-12deg)',
-                opacity: likeOpacity,
-                zIndex: 10
-            }}>TRADE</div>
+            {/* TRADE label */}
+            <div style={{ opacity: likeOpacity }} className="absolute top-5 left-5 border-2 border-green-400 text-green-400 font-bebas text-xl px-3 py-0.5 rounded -rotate-12 tracking-widest z-10">
+                TRADE
+            </div>
+            {/* NOPE label */}
+            <div style={{ opacity: nopeOpacity }} className="absolute top-5 right-5 border-2 border-red-400 text-red-400 font-bebas text-xl px-3 py-0.5 rounded rotate-12 tracking-widest z-10">
+                NOPE
+            </div>
 
-            <div style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(239,68,68,0.9)',
-                color: '#fff',
-                padding: '4px 12px',
-                borderRadius: '6px',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '20px',
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                transform: 'rotate(12deg)',
-                opacity: nopeOpacity,
-                zIndex: 10
-            }}>NOPE</div>
-
-            {/* Skin Bild */}
-            <div style={{
-                background: 'linear-gradient(160deg, #0a0a14 0%, #101020 60%, #0a0a14 100%)',
-                padding: '32px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '220px'
-            }}>
-                {listing.iconUrl ? (
-                    <img
-                        src={listing.iconUrl}
-                        alt={listing.marketHashName}
-                        draggable={false}
-                        style={{ maxHeight: '160px', maxWidth: '100%', objectFit: 'contain' }}
-                    />
-                ) : (
-                    <span style={{ fontSize: '60px' }}>🔫</span>
-                )}
+            {/* Image */}
+            <div className="bg-gradient-to-br from-[#0a0a12] to-[#101020] p-8 flex justify-center items-center h-[220px]">
+                {listing.iconUrl
+                    ? <img src={listing.iconUrl} alt={listing.marketHashName} draggable={false} className="max-h-[160px] max-w-full object-contain" />
+                    : <span className="text-6xl">🔫</span>
+                }
             </div>
 
             {/* Info */}
-            <div style={{ padding: '20px' }}>
-                <h3 style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '20px',
-                    fontWeight: 600,
-                    color: 'var(--text)',
-                    marginBottom: '10px',
-                    lineHeight: 1.2
-                }}>
-                    {listing.marketHashName}
-                </h3>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="p-5">
+                <h3 className="font-bebas text-2xl text-[#f0ede8] leading-tight mb-3">{listing.marketHashName}</h3>
+                <div className="flex justify-between items-center mb-4">
                     {listing.wear && (
-                        <span style={{
-                            fontSize: '12px',
-                            color: wearColor(listing.wear),
-                            background: `${wearColor(listing.wear)}18`,
-                            padding: '3px 10px',
-                            borderRadius: '20px',
-                            border: `1px solid ${wearColor(listing.wear)}44`
-                        }}>
-              {listing.wear}
-            </span>
+                        <span style={{ color: wearColor(listing.wear), background: `${wearColor(listing.wear)}18`, borderColor: `${wearColor(listing.wear)}44` }}
+                              className="text-xs px-3 py-1 rounded-full border">
+                            {listing.wear}
+                        </span>
                     )}
-                    <span style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '24px',
-                        fontWeight: 700,
-                        color: 'var(--accent)'
-                    }}>
-            €{listing.price?.toFixed(2)}
-          </span>
+                    <span className="font-bebas text-2xl text-yellow-400">€{listing.price?.toFixed(2)}</span>
                 </div>
 
-                {/* Anbieter */}
                 {listing.userId && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        paddingTop: '12px',
-                        borderTop: '1px solid var(--border)'
-                    }}>
-                        {listing.userId.avatar && (
-                            <img
-                                src={listing.userId.avatar}
-                                alt=""
-                                style={{ width: '20px', height: '20px', borderRadius: '50%' }}
-                            />
-                        )}
-                        <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-              {listing.userId.username}
-            </span>
+                    <div className="flex items-center gap-2 pt-3 border-t border-white/[0.06]">
+                        {listing.userId.avatar && <img src={listing.userId.avatar} alt="" className="w-5 h-5 rounded-full" />}
+                        <span className="text-xs text-[#4a4845]">{listing.userId.username}</span>
                     </div>
                 )}
             </div>
 
             {/* Buttons */}
-            <div style={{ padding: '0 20px 20px', display: 'flex', gap: '12px' }}>
-                <button
-                    onClick={onDislike}
-                    disabled={disabled}
-                    style={{
-                        flex: 1,
-                        padding: '14px',
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        borderRadius: '10px',
-                        color: 'var(--red)',
-                        fontSize: '22px',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                    }}
-                    onMouseOver={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
-                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                >
+            <div className="px-5 pb-5 flex gap-3">
+                <button onClick={onDislike} disabled={disabled}
+                        className="flex-1 py-3.5 border border-white/[0.08] rounded-xl text-red-400 text-xl hover:bg-red-500/10 hover:border-red-500/30 transition-all disabled:opacity-40">
                     ✕
                 </button>
-                <button
-                    onClick={onLike}
-                    disabled={disabled}
-                    style={{
-                        flex: 1,
-                        padding: '14px',
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        borderRadius: '10px',
-                        color: 'var(--green)',
-                        fontSize: '22px',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                    }}
-                    onMouseOver={e => e.currentTarget.style.background = 'rgba(34,197,94,0.1)'}
-                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                >
+                <button onClick={onLike} disabled={disabled}
+                        className="flex-1 py-3.5 border border-white/[0.08] rounded-xl text-green-400 text-xl hover:bg-green-500/10 hover:border-green-500/30 transition-all disabled:opacity-40">
                     ♥
                 </button>
             </div>
@@ -305,130 +134,80 @@ export default function SwipePage() {
     const [match, setMatch] = useState(null)
 
     useEffect(() => {
-        api.getFeed()
-            .then(data => setFeed(data))
-            .catch(err => setError(err.message))
-            .finally(() => setLoading(false))
+        api.getFeed().then(setFeed).catch(err => setError(err.message)).finally(() => setLoading(false))
     }, [])
 
     async function handleSwipe(action) {
         const current = feed[index]
         if (!current || actionLoading) return
         setActionLoading(true)
-
         try {
             const result = await api.swipe(current.id, action)
-            if (result.match) {
-                setMatch({ otherUser: current.userId })
-            }
+            if (result.match) setMatch({ otherUser: current.userId })
             setIndex(prev => prev + 1)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setActionLoading(false)
-        }
+        } catch (err) { console.error(err) }
+        finally { setActionLoading(false) }
     }
 
-    // Loading
     if (loading) return (
-        <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '36px', marginBottom: '16px' }}>⏳</div>
-            Feed wird geladen...
+        <div className="text-center py-20 text-[#4a4845]">
+            <div className="text-4xl mb-4">⏳</div>
+            <p className="text-sm">Feed wird geladen...</p>
         </div>
     )
 
-    // Kein Listing eingestellt
     if (error?.includes('erst einen Skin')) return (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
-            <h2 style={{ marginBottom: '12px', fontSize: '24px' }}>Noch kein Skin eingestellt</h2>
-            <p style={{ color: 'var(--muted)', marginBottom: '24px', fontSize: '14px' }}>
-                Du musst erst einen Skin anbieten, bevor du swipen kannst.
-            </p>
-            <Link href="/listings" style={{
-                display: 'inline-block',
-                background: 'var(--accent)',
-                color: '#000',
-                padding: '12px 28px',
-                borderRadius: '8px',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontWeight: 700,
-                fontSize: '16px',
-                letterSpacing: '0.05em'
-            }}>
-                SKIN EINSTELLEN
+        <div className="text-center py-16">
+            <div className="text-5xl mb-4">📦</div>
+            <h2 className="font-bebas text-4xl text-[#f0ede8] mb-2">Noch kein Skin eingestellt</h2>
+            <p className="text-[#4a4845] text-sm mb-6">Du musst erst einen Skin anbieten, bevor du swipen kannst.</p>
+            <Link href="/listings" className="inline-block bg-yellow-400 hover:bg-yellow-300 text-black px-7 py-3 rounded-lg font-bebas text-lg tracking-widest transition-all">
+                Skin einstellen
             </Link>
         </div>
     )
 
-    // Sonstiger Fehler
     if (error) return (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--red)' }}>
-            Fehler: {error}
+        <div className="text-center py-16 text-red-400">
+            <div className="text-4xl mb-4">⚠️</div>
+            <p className="text-sm">Fehler: {error}</p>
         </div>
     )
 
-    // Feed leer
     if (feed.length === 0 || index >= feed.length) return (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎯</div>
-            <h2 style={{ marginBottom: '12px', fontSize: '24px' }}>Alle geswiped!</h2>
-            <p style={{ color: 'var(--muted)', fontSize: '14px' }}>
-                Momentan keine weiteren Skins in deiner Preisrange. Schau später wieder vorbei.
-            </p>
+        <div className="text-center py-16">
+            <div className="text-5xl mb-4">🎯</div>
+            <h2 className="font-bebas text-4xl text-[#f0ede8] mb-2">Alle geswiped!</h2>
+            <p className="text-[#4a4845] text-sm">Momentan keine weiteren Skins. Schau später wieder vorbei.</p>
         </div>
     )
 
     return (
-        <div>
-            {/* Header */}
-            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <h1 style={{ fontSize: '28px' }}>Entdecken</h1>
-                <span style={{ color: 'var(--muted)', fontSize: '13px' }}>
-          {index + 1} / {feed.length}
-        </span>
-            </div>
-
-            {/* Karten-Stack */}
-            <div style={{ position: 'relative', height: '500px', marginBottom: '16px' }}>
-                {/* Nächste Karte (im Hintergrund) */}
-                {feed[index + 1] && (
-                    <div style={{
-                        position: 'absolute',
-                        width: '100%',
-                        transform: 'scale(0.96) translateY(12px)',
-                        opacity: 0.5,
-                        pointerEvents: 'none'
-                    }}>
-                        <div style={{
-                            background: 'var(--bg2)',
-                            border: '1px solid var(--border)',
-                            borderRadius: '16px',
-                            height: '460px'
-                        }} />
+        <AuthGuard>
+            <div className="max-w-sm mx-auto px-5 py-10">
+                {/* Header */}
+                <div className="flex justify-between items-baseline mb-6">
+                    <div>
+                        <p className="text-xs font-medium tracking-[0.18em] uppercase text-[#3a3835] mb-1">Entdecken</p>
+                        <h1 className="font-bebas text-5xl tracking-wide text-[#f0ede8]">Swipen</h1>
                     </div>
-                )}
+                    <span className="text-xs text-[#3a3835]">{index + 1} / {feed.length}</span>
+                </div>
 
-                {/* Aktuelle Karte */}
-                <SwipeCard
-                    listing={feed[index]}
-                    onLike={() => handleSwipe('like')}
-                    onDislike={() => handleSwipe('dislike')}
-                    disabled={actionLoading}
-                />
+                {/* Card stack */}
+                <div className="relative h-[500px] mb-5">
+                    {feed[index + 1] && (
+                        <div className="absolute w-full scale-[0.96] translate-y-3 opacity-40 pointer-events-none">
+                            <div className="bg-[#0e1117] border border-white/[0.07] rounded-2xl h-[460px]" />
+                        </div>
+                    )}
+                    <SwipeCard listing={feed[index]} onLike={() => handleSwipe('like')} onDislike={() => handleSwipe('dislike')} disabled={actionLoading} />
+                </div>
+
+                <p className="text-center text-[#3a3835] text-xs">← ablehnen · annehmen →</p>
+
+                {match && <MatchOverlay otherUser={match.otherUser} onClose={() => setMatch(null)} />}
             </div>
-
-            <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '12px' }}>
-                ← ziehen zum Ablehnen · zum Annehmen ziehen →
-            </p>
-
-            {/* Match Overlay */}
-            {match && (
-                <MatchOverlay
-                    otherUser={match.otherUser}
-                    onClose={() => setMatch(null)}
-                />
-            )}
-        </div>
+        </AuthGuard>
     )
 }

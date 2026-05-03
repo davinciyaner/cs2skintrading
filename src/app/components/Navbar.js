@@ -19,69 +19,45 @@ export default function Navbar() {
     ]
 
     return (
-        <nav style={{
-            background: 'rgba(10,10,15,0.95)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid var(--border)',
-            padding: '0 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: '60px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50
-        }}>
+        <nav className="sticky top-0 z-50 flex items-center justify-between h-[60px] px-6 bg-[rgba(8,10,15,0.95)] backdrop-blur-md border-b border-white/[0.06]">
+
             {/* Logo */}
-            <Link href="/" style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '22px',
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'var(--accent)'
-            }}>
-                Skin<span style={{ color: 'var(--text)' }}>Swipe</span>
+            <Link href="/" className="font-bebas text-[22px] tracking-[0.1em] uppercase text-yellow-400 hover:text-yellow-300 transition-colors">
+                Skin<span className="text-[#f0ede8]">Swipe</span>
             </Link>
 
-            {/* Nav Links */}
+            {/* Nav Links — only when logged in */}
             {user && (
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="flex gap-1">
                     {links.map(link => (
-                        <Link key={link.href} href={link.href} style={{
-                            padding: '6px 14px',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            color: pathname === link.href ? 'var(--accent)' : 'var(--muted)',
-                            background: pathname === link.href ? 'rgba(240,180,41,0.1)' : 'transparent',
-                            transition: 'all 0.15s'
-                        }}>
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
+                                pathname === link.href
+                                    ? 'text-yellow-400 bg-yellow-400/10'
+                                    : 'text-[#6b6865] hover:text-[#f0ede8] hover:bg-white/5'
+                            }`}
+                        >
                             {link.label}
                         </Link>
                     ))}
                 </div>
             )}
 
-            {/* User */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Right: User or Login */}
+            <div className="flex items-center gap-3">
                 {user ? (
                     <>
                         <img
                             src={user.avatar}
                             alt={user.username}
-                            style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid var(--border)' }}
+                            className="w-8 h-8 rounded-full border border-white/10"
                         />
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>{user.username}</span>
+                        <span className="text-xs text-[#6b6865] hidden sm:block">{user.username}</span>
                         <a
                             href={`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`}
-                            style={{
-                                fontSize: '13px',
-                                color: 'var(--muted)',
-                                padding: '5px 10px',
-                                border: '1px solid var(--border)',
-                                borderRadius: '6px'
-                            }}
+                            className="text-xs text-[#6b6865] hover:text-[#f0ede8] px-3 py-1.5 border border-white/10 hover:border-white/20 rounded-md transition-all duration-150"
                         >
                             Logout
                         </a>
@@ -89,17 +65,7 @@ export default function Navbar() {
                 ) : (
                     <a
                         href={`${process.env.NEXT_PUBLIC_API_URL}/auth/steam`}
-                        style={{
-                            background: 'var(--accent)',
-                            color: '#000',
-                            padding: '7px 16px',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            fontFamily: 'Rajdhani, sans-serif',
-                            letterSpacing: '0.05em',
-                            textTransform: 'uppercase'
-                        }}
+                        className="font-bebas text-sm tracking-widest uppercase bg-yellow-400 hover:bg-yellow-300 text-black px-4 py-1.5 rounded-md transition-all duration-150 hover:-translate-y-px"
                     >
                         Steam Login
                     </a>

@@ -36,9 +36,12 @@ const faqs = [
 
 export default function FAQ() {
     return (
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '2rem 1rem' }}>
-            <h1 style={{ marginBottom: '0.5rem' }}>Häufige Fragen</h1>
-            <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
+        <div className="min-h-screen bg-[#080a0f]">
+            <div className="max-w-2xl mx-auto px-5 py-12">
+
+            <p className="text-xs font-medium tracking-[0.18em] uppercase text-[#3a3835] mb-4">Support</p>
+            <h1 className="font-bebas text-5xl tracking-wide text-[#f0ede8] mb-2">Häufige Fragen</h1>
+            <p className="text-[#4a4845] text-sm mb-10">
                 Alles was du über CS2 Skin Trading auf SkinSwipe wissen musst.
             </p>
 
@@ -61,22 +64,25 @@ export default function FAQ() {
                 }}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="flex flex-col gap-2">
                 {faqs.map((faq, i) => (
-                    <div key={i} style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '1.25rem',
-                    }}>
-                        <h2 style={{ fontSize: '16px', margin: '0 0 0.5rem' }}>
-                            {faq.question}
-                        </h2>
-                        <p style={{ margin: 0, color: '#6b7280', fontSize: '14px', lineHeight: 1.6 }}>
+                    <div
+                        key={i}
+                        className="border border-white/[0.07] hover:border-white/12 bg-white/2 hover:bg-white/4 rounded-xl p-5 transition-all duration-150 group"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <h2 className="text-sm font-semibold text-[#e8e5e0] leading-snug">
+                                {faq.question}
+                            </h2>
+                            <span className="text-yellow-400/40 group-hover:text-yellow-400/70 transition-colors text-xs mt-0.5 shrink-0">✦</span>
+                        </div>
+                        <p className="mt-2 text-xs text-[#4a4845] leading-relaxed font-light">
                             {faq.answer}
                         </p>
                     </div>
                 ))}
             </div>
+        </div>
         </div>
     )
 }
