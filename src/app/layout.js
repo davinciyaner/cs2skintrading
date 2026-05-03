@@ -56,11 +56,11 @@ const dmSans = DM_Sans({
 export default function RootLayout({ children }) {
     return (
         <html lang="de" className={`${bebasNeue.variable} ${dmSans.variable}`}>
-        <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0a0a0f', color: '#f0ede8' }}>
         <SpeedInsights />
         <Analytics />
         <Navbar />
-        <main>
+        <main className="flex-1">
             {children}
         </main>
         <Footer />

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = '/api-backend'
 
 async function apiFetch(path, options = {}) {
     const res = await fetch(`${API_URL}${path}`, {
@@ -19,7 +19,7 @@ export const api = {
     getMe: () => apiFetch('/auth/me'),
     logout: () => apiFetch('/auth/logout'),
     syncInventory: () => apiFetch('/api/inventory/sync', { method: 'POST' }),
-    loginUrl: `${API_URL}/auth/steam`,
+        loginUrl: `${process.env.NEXT_PUBLIC_API_URL}/auth/steam`,
 
     saveInventory: (rawData) => apiFetch('/api/inventory/save', {
         method: 'POST',
