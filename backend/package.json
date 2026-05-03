@@ -6,6 +6,7 @@
     "main": "src/server.js",
     "scripts": {
         "setup": "npm install && npm update",
+        "dev": "nodemon server.js",
         "start": "node src/server.js"
     },
     "keywords": [
@@ -36,5 +37,8 @@
         "passport-steam": "^1.0.18",
         "prisma": "^7.8.0",
         "rotating-file-stream": "^1.4.6"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.14"
     }
 }

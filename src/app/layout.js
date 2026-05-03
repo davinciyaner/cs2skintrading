@@ -1,9 +1,9 @@
 import './globals.css'
-import Navbar from "@/app/components/Navbar";
 import Footer from "./components/Footer";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import FAQ from "./faq/page";
+import Navbar from "./components/Navbar";
+import { Bebas_Neue, DM_Sans } from 'next/font/google'
 
 export const metadata = {
     title: 'SkinSwipe – CS2 Skins tauschen | Kostenloses P2P Skin Trading',
@@ -41,17 +41,28 @@ export const metadata = {
     }
 }
 
+
+const bebasNeue = Bebas_Neue({
+    weight: '400',
+    subsets: ['latin'],
+    variable: '--font-bebas',
+})
+
+const dmSans = DM_Sans({
+    subsets: ['latin'],
+    variable: '--font-dm',
+})
+
 export default function RootLayout({ children }) {
     return (
-        <html lang="de">
+        <html lang="de" className={`${bebasNeue.variable} ${dmSans.variable}`}>
+        <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0a0a0f', color: '#f0ede8' }}>
         <SpeedInsights />
         <Analytics />
-        <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
-        <main style={{ maxWidth: '480px', margin: '0 auto', padding: '24px 16px', flex: 1 }}>
+        <main className="flex-1">
             {children}
         </main>
-        <FAQ />
         <Footer />
         </body>
         </html>
