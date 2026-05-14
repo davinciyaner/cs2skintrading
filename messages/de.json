@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "home": "Home",
+    "swipe": "Swipen",
+    "listings": "Meine Skins",
+    "matches": "Matches"
+  },
+  "meta": {
+    "title": "SkinSwipe – CS2 Skins tauschen | Kostenloses P2P Skin Trading",
+    "description": "CS2 Skins tauschen ohne Gebühren. Finde den perfekten Trade mit dem Tinder-Prinzip."
+  },
+  "home": {
+    "badge": "Beta — Jetzt kostenlos testen",
+    "hero_title_1": "Skins",
+    "hero_title_2": "Swipen",
+    "hero_title_3": "Traden",
+    "hero_desc": "Das erste Tinder für CS2 Skins. Swipen, matchen, traden — direkt mit echten Spielern. Kein Steam Tax. Keine Bots. Keine Gebühren.",
+    "cta_login": "Mit Steam einloggen",
+    "badges": ["Kostenlos", "Kein Steam Tax", "Keine Bots", "P2P Trading"],
+    "how_title": "So funktionierts",
+    "cta_title": "Bereit zu traden?",
+    "cta_desc": "Kostenlos einloggen und sofort mit dem Swipen anfangen.",
+    "cta_btn": "Jetzt kostenlos starten",
+    "match_label": "ITS A MATCH",
+    "match_sub": "Trade über Steam abwickeln",
+    "skip": "Skip",
+    "match": "Match",
+    "trade": "Trade",
+    "steps": [
+      {"icon": "🔑", "num": "01", "title": "Steam Login", "desc": "Einloggen mit deinem Steam Account — ein Klick, fertig."},
+      {"icon": "🃏", "num": "02", "title": "Skins einstellen", "desc": "Wähle welche Skins aus deinem Inventar du tauschen willst."},
+      {"icon": "👆", "num": "03", "title": "Swipen", "desc": "Rechts für Skins die du willst. Links für die du nicht willst."},
+      {"icon": "🤝", "num": "04", "title": "Match & Trade", "desc": "Gegenseitiges Match — Trade direkt über Steam abwickeln."}
+    ]
+  },
+  "footer": {
+    "impressum": "Impressum",
+    "datenschutz": "Datenschutz",
+    "faq": "FAQ",
+    "steam_agb": "Steam AGB",
+    "copy": "© 2026 cs2tradeskins · Nicht mit Valve assoziiert"
+  }
+}

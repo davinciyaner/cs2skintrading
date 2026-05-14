@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { api } from "@/app/lib/api"
+import { api } from "../lib/api"
 import Image from "next/image";
 
 function ApiKeyModal({ onSave, onClose }) {
