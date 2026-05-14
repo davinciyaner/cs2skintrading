@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "home": "Home",
+    "swipe": "Swipe",
+    "listings": "My Skins",
+    "matches": "Matches"
+  },
+  "meta": {
+    "title": "SkinSwipe – Trade CS2 Skins | Free P2P Skin Trading",
+    "description": "Trade CS2 skins without fees. Find the perfect trade with the Tinder principle – swipe, match, trade."
+  },
+  "home": {
+    "badge": "Beta — Try it free now",
+    "hero_title_1": "Skins",
+    "hero_title_2": "Swipe",
+    "hero_title_3": "Trade",
+    "hero_desc": "The first Tinder for CS2 Skins. Swipe, match, trade — directly with real players. No Steam Tax. No Bots. No Fees.",
+    "cta_login": "Login with Steam",
+    "badges": ["Free", "No Steam Tax", "No Bots", "P2P Trading"],
+    "how_title": "How it works",
+    "cta_title": "Ready to trade?",
+    "cta_desc": "Login for free and start swiping right away.",
+    "cta_btn": "Start for free",
+    "match_label": "ITS A MATCH",
+    "match_sub": "Complete trade via Steam",
+    "skip": "Skip",
+    "match": "Match",
+    "trade": "Trade",
+    "steps": [
+      {"icon": "🔑", "num": "01", "title": "Steam Login", "desc": "Log in with your Steam account — one click, done."},
+      {"icon": "🃏", "num": "02", "title": "List Skins", "desc": "Choose which skins from your inventory you want to trade."},
+      {"icon": "👆", "num": "03", "title": "Swipe", "desc": "Right for skins you want. Left for skins you don't."},
+      {"icon": "🤝", "num": "04", "title": "Match & Trade", "desc": "Mutual match — complete the trade directly via Steam."}
+    ]
+  },
+  "footer": {
+    "impressum": "Imprint",
+    "datenschutz": "Privacy Policy",
+    "faq": "FAQ",
+    "steam_agb": "Steam ToS",
+    "copy": "© 2026 cs2tradeskins · Not affiliated with Valve"
+  }
+}

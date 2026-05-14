@@ -1,9 +1,11 @@
 import './globals.css'
-import Footer from "./components/Footer";
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import Navbar from "./components/Navbar";
-import { Bebas_Neue, DM_Sans } from 'next/font/google'
+import Footer from "./components/Footer"
+import {Analytics} from "@vercel/analytics/next"
+import {SpeedInsights} from "@vercel/speed-insights/next"
+import Navbar from "./components/Navbar"
+import {Bebas_Neue, DM_Sans} from 'next/font/google'
+import {I18nProvider} from "../i18n/request";
+
 
 export const metadata = {
     title: 'SkinSwipe – CS2 Skins tauschen | Kostenloses P2P Skin Trading',
@@ -53,17 +55,23 @@ const dmSans = DM_Sans({
     variable: '--font-dm',
 })
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({children}) {
     return (
-        <html lang="de" className={`${bebasNeue.variable} ${dmSans.variable}`}>
-        <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0a0a0f', color: '#f0ede8' }}>
-        <SpeedInsights />
-        <Analytics />
-        <Navbar />
-        <main className="flex-1">
-            {children}
-        </main>
-        <Footer />
+        <html lang="en" className={`${bebasNeue.variable} ${dmSans.variable}`}>
+        <body style={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh',
+            backgroundColor: '#0a0a0f',
+            color: '#f0ede8'
+        }}>
+        <I18nProvider>
+            <SpeedInsights/>
+            <Analytics/>
+            <Navbar/>
+            <main className="flex-1">{children}</main>
+            <Footer/>
+        </I18nProvider>
         </body>
         </html>
     )

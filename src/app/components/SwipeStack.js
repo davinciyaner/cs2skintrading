@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { api } from '../../lib/api'
+import Image from "next/image";
+import {api} from "@/app/lib/api";
 
 // Einzelne Skin-Karte
 function SkinCard({ listing, onLike, onDislike, isTop }) {
@@ -28,7 +29,7 @@ function SkinCard({ listing, onLike, onDislike, isTop }) {
                 minHeight: '240px'
             }}>
                 {skin.iconUrl ? (
-                    <img
+                    <Image
                         src={skin.iconUrl}
                         alt={skin.marketHashName}
                         style={{ maxWidth: '280px', maxHeight: '200px', objectFit: 'contain' }}
@@ -78,7 +79,7 @@ function SkinCard({ listing, onLike, onDislike, isTop }) {
                         gap: '8px'
                     }}>
                         {skin.userId.avatar && (
-                            <img
+                            <Image
                                 src={skin.userId.avatar}
                                 alt={skin.userId.username}
                                 style={{ width: '24px', height: '24px', borderRadius: '50%' }}
@@ -141,7 +142,7 @@ function SkinCard({ listing, onLike, onDislike, isTop }) {
 }
 
 // Match-Overlay
-function MatchOverlay({ match, onClose }) {
+function MatchOverlay({ onClose }) {
     return (
         <div style={{
             position: 'fixed',
@@ -155,7 +156,7 @@ function MatchOverlay({ match, onClose }) {
             gap: '24px'
         }}>
             <div style={{ fontSize: '64px' }}>🎉</div>
-            <h2 style={{ color: '#4ade80', fontSize: '32px', margin: 0 }}>It's a Match!</h2>
+            <h2 style={{ color: '#4ade80', fontSize: '32px', margin: 0 }}>Its a Match!</h2>
             <p style={{ color: '#aaa', textAlign: 'center', maxWidth: '300px' }}>
                 Ihr wollt beide tauschen. Nehmt auf Steam Kontakt auf!
             </p>
