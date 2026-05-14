@@ -2,6 +2,7 @@
 
 import {useEffect, useRef, useState} from 'react'
 import {useI18n} from "@/i18n/request";
+import ActivityFeed from "@/app/components/ActivityFeed";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -215,6 +216,8 @@ export default function Page() {
                                 ))}
                             </div>
                         </section>
+
+                        <ActivityFeed />
 
                         <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-20">
                             <div
