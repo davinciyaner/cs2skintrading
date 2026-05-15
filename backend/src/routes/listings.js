@@ -1,19 +1,18 @@
 import express from 'express'
 import { requireAuth } from '../middleware/auth.js'
-import prisma from '../config/db.js'
+import db from '../config/db.js'
 import { getSkinPrice } from '../services/steamMarket.js'
 
 const router = express.Router()
 
-// Eigene Listings abrufen
 router.get('/mine', requireAuth, async (req, res) => {
-    const listings = await prisma.listing.findMany({
-        where: { userId: req.user.id, active: true }
+    const result = await db.execute({
+        sql: `SELECT * FROM Listing WHERE userId = ? AND active = 1`,
+        args: [req.user.id]
     })
-    res.json(listings)
+    res.json(result.rows)
 })
 
-// Neues Listing erstellen
 router.post('/', requireAuth, async (req, res) => {
     const { assetId, marketHashName, iconUrl } = req.body
 
@@ -21,51 +20,44 @@ router.post('/', requireAuth, async (req, res) => {
         return res.status(400).json({ error: 'assetId und marketHashName erforderlich' })
     }
 
-    // Bereits eingestellt?
-    const existing = await prisma.listing.findFirst({
-        where: { userId: req.user.id, assetId, active: true }
+    const existing = await db.execute({
+        sql: `SELECT id FROM Listing WHERE userId = ? AND assetId = ? AND active = 1`,
+        args: [req.user.id, assetId]
     })
-    if (existing) {
+    if (existing.rows.length > 0) {
         return res.status(400).json({ error: 'Skin bereits eingestellt' })
     }
 
-    // Preis von Steam Market holen
     const priceData = await getSkinPrice(marketHashName)
     if (!priceData) {
-        return res.status(400).json({
-            error: 'Preis konnte nicht ermittelt werden. Skin möglicherweise nicht handelbar.'
-        })
+        return res.status(400).json({ error: 'Preis konnte nicht ermittelt werden.' })
     }
 
-    const listing = await prisma.listing.create({
-        data: {
-            userId: req.user.id,
-            steamId: req.user.steamId,
-            assetId,
-            marketHashName,
-            iconUrl: iconUrl || null,
-            price: priceData.price,
-            priceMin: priceData.priceRange.min,
-            priceMax: priceData.priceRange.max
-        }
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    await db.execute({
+        sql: `INSERT INTO Listing (id, userId, steamId, assetId, marketHashName, iconUrl, price, priceMin, priceMax, active, createdAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))`,
+        args: [id, req.user.id, req.user.steamId, assetId, marketHashName, iconUrl || null,
+            priceData.price, priceData.priceRange.min, priceData.priceRange.max]
     })
 
-    res.status(201).json(listing)
+    const result = await db.execute({ sql: `SELECT * FROM Listing WHERE id = ?`, args: [id] })
+    res.status(201).json(result.rows[0])
 })
 
-// Listing deaktivieren
 router.delete('/:id', requireAuth, async (req, res) => {
-    const listing = await prisma.listing.findFirst({
-        where: { id: req.params.id, userId: req.user.id }
+    const result = await db.execute({
+        sql: `SELECT id FROM Listing WHERE id = ? AND userId = ?`,
+        args: [req.params.id, req.user.id]
     })
 
-    if (!listing) {
+    if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Listing nicht gefunden' })
     }
 
-    await prisma.listing.update({
-        where: { id: listing.id },
-        data: { active: false }
+    await db.execute({
+        sql: `UPDATE Listing SET active = 0 WHERE id = ?`,
+        args: [req.params.id]
     })
 
     res.json({ success: true })
