@@ -87,7 +87,7 @@ export default function Page() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-[#3a3835]">Live Activity</p>
-                                <h2 className="font-bebas text-lg tracking-wide text-[#f0ede8] mt-0.5">Gerade getradet</h2>
+                                <h2 className="font-bebas text-lg tracking-wide text-[#f0ede8] mt-0.5">{t('activity.getradet')}</h2>
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px] text-[#4a4845]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>

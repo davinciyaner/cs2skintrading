@@ -35,10 +35,15 @@
         "morgan": "^1.9.1",
         "passport": "^0.7.0",
         "passport-steam": "^1.0.18",
-        "prisma": "^7.8.0",
-        "rotating-file-stream": "^1.4.6"
+        "prisma": "^6.19.3",
+        "rotating-file-stream": "^1.4.6",
+        "sqlite3": "^6.0.1"
     },
     "devDependencies": {
         "nodemon": "^3.1.14"
+    },
+    "resolutions": {
+        "tar": ">=7.5.11",
+        "@tootallnate/once": ">=3.0.1"
     }
 }

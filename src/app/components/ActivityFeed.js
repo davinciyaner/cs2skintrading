@@ -44,17 +44,6 @@ export default function ActivityFeed() {
 
     return (
         <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <p className="text-xs font-medium tracking-[0.18em] uppercase text-[#3a3835] mb-1">Live Activity</p>
-                    <h2 className="font-bebas text-2xl tracking-wide text-[#f0ede8]">Gerade getradet</h2>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[#4a4845]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>
-                    Live
-                </div>
-            </div>
 
             {/* Feed */}
             <div className="space-y-2">

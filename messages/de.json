@@ -11,9 +11,9 @@
   },
   "home": {
     "badge": "Beta — Jetzt kostenlos testen",
-    "hero_title_1": "Skins",
-    "hero_title_2": "Swipen",
-    "hero_title_3": "Traden",
+    "hero_title_1": "Swipe",
+    "hero_title_2": "Match",
+    "hero_title_3": "Trade",
     "hero_desc": "Das erste Tinder für CS2 Skins. Swipen, matchen, traden — direkt mit echten Spielern. Kein Steam Tax. Keine Bots. Keine Gebühren.",
     "cta_login": "Mit Steam einloggen",
     "badges": ["Kostenlos", "Kein Steam Tax", "Keine Bots", "P2P Trading"],
@@ -39,5 +39,8 @@
     "faq": "FAQ",
     "steam_agb": "Steam AGB",
     "copy": "© 2026 cs2tradeskins · Nicht mit Valve assoziiert"
+  },
+  "activity": {
+    "getradet": "Gerade getradet"
   }
 }
