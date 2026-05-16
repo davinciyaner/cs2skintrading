@@ -1,65 +1,45 @@
 import express from 'express'
 import { requireAuth } from '../middleware/auth.js'
-import db from '../config/db.js'
+import Listing from '../models/Listing.js'
 import { getSkinPrice } from '../services/steamMarket.js'
 
 const router = express.Router()
 
 router.get('/mine', requireAuth, async (req, res) => {
-    const result = await db.execute({
-        sql: `SELECT * FROM Listing WHERE userId = ? AND active = 1`,
-        args: [req.user.id]
-    })
-    res.json(result.rows)
+    const listings = await Listing.find({ userId: req.user._id, active: true })
+    res.json(listings)
 })
 
 router.post('/', requireAuth, async (req, res) => {
     const { assetId, marketHashName, iconUrl } = req.body
+    if (!assetId || !marketHashName) return res.status(400).json({ error: 'assetId und marketHashName erforderlich' })
 
-    if (!assetId || !marketHashName) {
-        return res.status(400).json({ error: 'assetId und marketHashName erforderlich' })
-    }
-
-    const existing = await db.execute({
-        sql: `SELECT id FROM Listing WHERE userId = ? AND assetId = ? AND active = 1`,
-        args: [req.user.id, assetId]
-    })
-    if (existing.rows.length > 0) {
-        return res.status(400).json({ error: 'Skin bereits eingestellt' })
-    }
+    const existing = await Listing.findOne({ userId: req.user._id, assetId, active: true })
+    if (existing) return res.status(400).json({ error: 'Skin bereits eingestellt' })
 
     const priceData = await getSkinPrice(marketHashName)
-    if (!priceData) {
-        return res.status(400).json({ error: 'Preis konnte nicht ermittelt werden.' })
-    }
+    if (!priceData) return res.status(400).json({ error: 'Preis konnte nicht ermittelt werden.' })
 
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    await db.execute({
-        sql: `INSERT INTO Listing (id, userId, steamId, assetId, marketHashName, iconUrl, price, priceMin, priceMax, active, createdAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))`,
-        args: [id, req.user.id, req.user.steamId, assetId, marketHashName, iconUrl || null,
-            priceData.price, priceData.priceRange.min, priceData.priceRange.max]
+    const listing = await Listing.create({
+        userId: req.user._id,
+        steamId: req.user.steamId,
+        assetId,
+        marketHashName,
+        iconUrl: iconUrl || null,
+        price: priceData.price,
+        priceMin: priceData.priceRange.min,
+        priceMax: priceData.priceRange.max
     })
 
-    const result = await db.execute({ sql: `SELECT * FROM Listing WHERE id = ?`, args: [id] })
-    res.status(201).json(result.rows[0])
+    res.status(201).json(listing)
 })
 
 router.delete('/:id', requireAuth, async (req, res) => {
-    const result = await db.execute({
-        sql: `SELECT id FROM Listing WHERE id = ? AND userId = ?`,
-        args: [req.params.id, req.user.id]
-    })
+    const listing = await Listing.findOne({ _id: req.params.id, userId: req.user._id })
+    if (!listing) return res.status(404).json({ error: 'Listing nicht gefunden' })
 
-    if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Listing nicht gefunden' })
-    }
-
-    await db.execute({
-        sql: `UPDATE Listing SET active = 0 WHERE id = ?`,
-        args: [req.params.id]
-    })
-
+    listing.active = false
+    await listing.save()
     res.json({ success: true })
 })
 
