@@ -1,7 +1,8 @@
 import express from 'express'
 import passport from 'passport'
 import { Strategy as SteamStrategy } from 'passport-steam'
-import db from '../config/db.js'
+import User from '../models/User.js'
+import InventoryItem from '../models/InventoryItem.js'
 
 const router = express.Router()
 
@@ -9,21 +10,11 @@ async function syncInventory(userId, steamId) {
     try {
         const res = await fetch(
             `https://steamcommunity.com/inventory/${steamId}/730/2?l=english&count=75`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json',
-                }
-            }
+            { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
         )
+        if (!res.ok) return
 
-        if (!res.ok) {
-            console.warn(`Inventar sync fehlgeschlagen für ${steamId}: ${res.status}`)
-            return
-        }
-
-        const data = await res.json()
-        const { assets, descriptions } = data
+        const { assets, descriptions } = await res.json()
         if (!assets || !descriptions) return
 
         const descMap = {}
@@ -41,21 +32,15 @@ async function syncInventory(userId, steamId) {
                     : null,
                 tradable: desc.tradable === 1
             }
-        }).filter(item => item.tradable && item.marketHashName !== 'Unknown')
+        }).filter(i => i.tradable && i.marketHashName !== 'Unknown')
 
         for (const item of items) {
-            await db.execute({
-                sql: `INSERT INTO InventoryItem (id, userId, assetId, marketHashName, iconUrl, tradable, createdAt, updatedAt)
-                      VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-                      ON CONFLICT(userId, assetId) DO UPDATE SET
-                        marketHashName = excluded.marketHashName,
-                        iconUrl = excluded.iconUrl,
-                        tradable = excluded.tradable,
-                        updatedAt = datetime('now')`,
-                args: [userId, item.assetId, item.marketHashName, item.iconUrl, item.tradable ? 1 : 0]
-            })
+            await InventoryItem.findOneAndUpdate(
+                { userId, assetId: item.assetId },
+                { ...item, userId },
+                { upsert: true, new: true }
+            )
         }
-
         console.log(`Inventar sync: ${items.length} Items für ${steamId}`)
     } catch (err) {
         console.error('Inventar sync Fehler:', err.message)
@@ -71,31 +56,16 @@ export function setupSteamStrategy() {
         },
         async (identifier, profile, done) => {
             try {
-                const steamId = profile.id
-                const username = profile.displayName
-                const avatar = profile.photos?.[2]?.value || profile.photos?.[0]?.value
-                const profileUrl = profile._json.profileurl
-
-                // Upsert User
-                await db.execute({
-                    sql: `INSERT INTO User (id, steamId, username, avatar, profileUrl, createdAt)
-                          VALUES (lower(hex(randomblob(16))), ?, ?, ?, ?, datetime('now'))
-                          ON CONFLICT(steamId) DO UPDATE SET
-                            username = excluded.username,
-                            avatar = excluded.avatar`,
-                    args: [steamId, username, avatar, profileUrl]
-                })
-
-                const result = await db.execute({
-                    sql: `SELECT * FROM User WHERE steamId = ?`,
-                    args: [steamId]
-                })
-
-                const user = result.rows[0]
-                console.log(`User eingeloggt: ${user.username}`)
-
-                syncInventory(user.id, steamId)
-
+                const user = await User.findOneAndUpdate(
+                    { steamId: profile.id },
+                    {
+                        username: profile.displayName,
+                        avatar: profile.photos?.[2]?.value || profile.photos?.[0]?.value,
+                        profileUrl: profile._json.profileurl
+                    },
+                    { upsert: true, new: true }
+                )
+                syncInventory(user._id, profile.id)
                 return done(null, user)
             } catch (err) {
                 return done(err)
@@ -103,38 +73,29 @@ export function setupSteamStrategy() {
         }
     ))
 
-    passport.serializeUser((user, done) => {
-        done(null, user.id)
-    })
+    passport.serializeUser((user, done) => done(null, user._id))
 
     passport.deserializeUser(async (id, done) => {
         try {
-            const result = await db.execute({
-                sql: `SELECT * FROM User WHERE id = ?`,
-                args: [id]
-            })
-            done(null, result.rows[0] ?? null)
+            const user = await User.findById(id)
+            done(null, user)
         } catch (err) {
             done(err)
         }
     })
 }
 
-router.get('/steam',
-    passport.authenticate('steam', { failureRedirect: '/' })
-)
+router.get('/steam', passport.authenticate('steam', { failureRedirect: '/' }))
 
 router.get('/steam/return',
     passport.authenticate('steam', { failureRedirect: process.env.FRONTEND_URL }),
-    (req, res) => {
-        res.redirect(process.env.FRONTEND_URL + '/listings')
-    }
+    (req, res) => res.redirect(process.env.FRONTEND_URL + '/listings')
 )
 
 router.get('/me', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Nicht eingeloggt' })
     res.json({
-        id: req.user.id,
+        id: req.user._id,
         steamId: req.user.steamId,
         username: req.user.username,
         avatar: req.user.avatar
@@ -143,14 +104,12 @@ router.get('/me', (req, res) => {
 
 router.post('/sync-inventory', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Nicht eingeloggt' })
-    await syncInventory(req.user.id, req.user.steamId)
+    await syncInventory(req.user._id, req.user.steamId)
     res.json({ success: true })
 })
 
 router.get('/logout', (req, res) => {
-    req.logout(() => {
-        res.redirect(process.env.FRONTEND_URL)
-    })
+    req.logout(() => res.redirect(process.env.FRONTEND_URL))
 })
 
 export default router
